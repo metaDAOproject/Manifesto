@@ -1,0 +1,1158 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+The Meta-DAO Manifesto
+\end_layout
+
+\begin_layout Author
+Brahma <0xBrahma@tutamail.com>
+\end_layout
+
+\begin_layout Abstract
+In 2020, Robert Leshner introduced the Compound Finance governance system.
+ Since then, it has gained widespread adoption.
+ The problem is that it only works for very simple projects.
+ To organize larger ones, you need a Meta-DAO: a DAO that is itself broken
+ into smaller DAOs.
+ 
+\end_layout
+
+\begin_layout Abstract
+In this paper, we introduce a Meta-DAO implementation.
+ This implementation is built upon a new primitive called conditional tokens.
+ DAOs can use conditional tokens to estimate how an improvement proposal
+ passing would impact a token's market capitalization.
+ In our implementation, DAOs in the Meta-DAO execute improvement proposals
+ when they would increase the Meta-DAO's market capitalization.
+ They reject proposals when they would decrease it.
+ The end-result is a system where decisions are made by a combination of
+ markets and code.
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/CompoundGovernance.drawio.png
+	scale 20
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+The Compound Finance governance system
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Much of decentralized finance today is managed by the Compound Finance governanc
+e system or another system that was inspired by it.
+ The centerpiece of the system is the 
+\emph on
+governor
+\emph default
+,
+\emph on
+ 
+\emph default
+the smart contract that manages decisions.
+ Accounts get the governor to take actions by introducing improvement proposals.
+ Improvement proposals contain a list of targets, smart contracts to call,
+ and calldatas, low-level machine instructions to those smart contracts.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "key-2"
+literal "false"
+
+\end_inset
+
+ For example, a proposal to pay a security auditor 200k in USDC would contain
+ USDC as the target and a 200k transfer instruction as the calldata.
+ After a proposal is raised, holders of the COMP token can use their tokens
+ to vote 
+\emph on
+Pass
+\emph default
+ or 
+\emph on
+Fail
+\emph default
+.
+ If a proposal garners enough 
+\emph on
+Pass
+\emph default
+ votes, the governor executes it.
+ It does this through calling each target with its corresponding calldata.
+ 
+\end_layout
+
+\begin_layout Standard
+This system works well for simple DAOs.
+ When there's only one product that the DAO manages, a small number of contribut
+ors to the DAO, and there exist a few token-holders with large stakes (so-called
+ whales), it works.
+ 
+\end_layout
+
+\begin_layout Standard
+But not all DAOs are like this.
+ Some DAOs, like MakerDAO, manage complex products with many integrations.
+ Others, like Gnosis, Abracadabra, and Sushi, market multiple products under
+ a single brand.
+ It's hard for every decision these DAOs make to get pushed through as an
+ improvement proposal.
+ In addition, many DAOs have very dispersed token-ownership, so that the
+ incentive for each holder to do research on proposals is small.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "key-10"
+literal "false"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/MetaDAOGovernance.drawio.png
+	scale 15
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+A Meta-DAO
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The natural solution to this problem is to build a Meta-DAO, a single DAO
+ that is itself broken up into multiple DAOs.
+ Each DAO would focus on a smaller piece of the puzzle, with some coordination
+ mechanism to coordinate their activities.
+ This would prevent any individual DAO from being overloaded with decisions.
+\end_layout
+
+\begin_layout Standard
+Indeed, many communities have raised the need to reorganize themselves like
+ so.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "key-7,key-8,key-3"
+literal "false"
+
+\end_inset
+
+ But so far, the mechanism for decision-making in these DAOs is unclear.
+ In this paper, we propose an implementation driven by code and markets.
+ 
+\end_layout
+
+\begin_layout Section
+Conditional tokens
+\end_layout
+
+\begin_layout Standard
+At the core of our system is a primitive called conditional tokens.
+ Conditional tokens give their owners the right to claim underlying tokens
+ in certain cases.
+ Users mint and burn conditional tokens, also called 
+\emph on
+cndTokens
+\emph default
+, by interacting with the conditional vault smart contract.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/ConditionalTokenMinting.drawio.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Minting cndTokens
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To mint cndTokens, a user must deposit some tokens and specify a conditional
+ expression.
+ Conditional expressions are programmable expressions that can be evaluated
+ by the conditional vault.
+ For example, a user could pass the following expression:
+\end_layout
+
+\begin_layout LyX-Code
+block(150).transaction_count > 1000
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+This, like the other conditional expressions, is pseudocode.
+ It's helpful to think of the conditional vault as an abstract machine that
+ evaluates arbitrary conditional expressions, but an implementation of the
+ conditional vault doesn't need to allow such generality.
+ Instead, it can allow the user to select and configure between a few pre-define
+d alternatives.
+ For example, one could build a conditional vault that only accepts conditional
+ expressions like this one, where the function signature to mint cndTokens
+ looks like 
+\emph on
+mint(block_number, required_transaction_count)
+\emph default
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+When block 150 is mined, it will contain either more than 1,000 transactions
+ or 1,000 or fewer transactions.
+ In the former case, the expression will evalute to true; in the latter,
+ it will evaluate to false.
+ Before block 150 happens, the conditional vault can't evalute the expression.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/ConditionalTokenBurning.drawio.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Burning cndTokens
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Once the conditional vault can evaluate an expression, anyone can trigger
+ the burning of cndTokens tied to that expression.
+ If that expression evalutes to true, the conditional vault sends the deposited
+ tokens to whoever held those cndTokens.
+ If it evalutes to false, the vault sends the tokens to whoever minted the
+ cndTokens.
+\end_layout
+
+\begin_layout Section
+Conditional markets
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/ConditionalSwaps.drawio.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+A conditional swap
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+With conditional tokens, traders can execute conditional swaps, swaps that
+ get finalized only if something happens.
+ These are performed through the following steps:
+\end_layout
+
+\begin_layout Enumerate
+A trader deposits the token they want to sell into the conditional vault,
+ and supplies a conditional expression that only evalutes to true if the
+ desired event happens.
+ If they want to swap ETH into SOL, but only if Solana can achieve 20,000
+ transactions per second of usage by block 500,000, they would mint cndETH
+ using the conditional expression 
+\begin_inset Quotes eld
+\end_inset
+
+block(500_000).transaction_count > 20_000.
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Assume that manipulating this number is prohibitively expensive.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Someone else wishing to take the other side of the swap converts their tokens
+ into cndTokens, using the same conditional expression.
+ In this example, they would convert their SOL into cndSOL.
+\end_layout
+
+\begin_layout Enumerate
+Both sides swap their cndTokens.
+ Here, the trader would receive cndSOL and their trading partner would receive
+ cndETH.
+\end_layout
+
+\begin_layout Standard
+If the condition evalutes to true, both sides can redeem their conditional
+ tokens for normal tokens.
+ Otherwise, they will get back what they originally put in.
+ In our example, the trader will only receive SOL if block 500,000 contains
+ more than 20,000 transactions in it.
+ Otherwise, they will receive their original ETH.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/ConditionalMarket.drawio.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+A conditional market
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Instead of trading directly with each other, most traders will likely prefer
+ to trade through markets.
+ Conditional markets allow this.
+ As long as traders swap cndTokens for other cndTokens that share the same
+ conditional expression, conditional swaps work the same.
+ 
+\end_layout
+
+\begin_layout Standard
+In allowing traders to do conditional swaps, conditional markets open the
+ door for price discovery around alternate realities.
+ If there was a cndETH to cndSOL pair like the one in our example, this
+ pair would not have the same exchange rate as a normal ETH to SOL pair.
+ Because those conditional swaps are guaranteed to be reverted unless Solana
+ can get a large amount of activity, this type of cndSOL is likely to trade
+ at a premium relative to normal SOL.
+ 
+\end_layout
+
+\begin_layout Standard
+In general, cndTokens trade at different prices than their normal counterparts,
+ with their price dependendant on how much those normal tokens would be
+ worth if the event encoded in the conditional expression came true.
+\end_layout
+
+\begin_layout Section
+Estimating impact of proposals
+\end_layout
+
+\begin_layout Standard
+Once conditional expressions can be made dependent on a given improvement
+ proposal passing or failing, conditional markets can be used to estimate
+ the impact of a proposal on a token's market capitalization.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/ConditionalProposalMarket.drawio.png
+	scale 25
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+A conditional-on-proposal market
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These conditional expressions have the following form, where x is an improvement
+ proposal number and y is either 
+\emph on
+Pass
+\emph default
+ or 
+\emph on
+Fail
+\emph default
+:
+\end_layout
+
+\begin_layout LyX-Code
+require(proposal(x).state != Pending) && proposal(x).state == y
+\end_layout
+
+\begin_layout Standard
+We call cndTokens where y is 
+\emph on
+Pass
+\emph default
+ redeemable-on-pass tokens and cndTokens where y is 
+\emph on
+Fail
+\emph default
+ redeemable-on-fail tokens.
+ 
+\end_layout
+
+\begin_layout Standard
+Importantly, any token can be converted into a redeemable-on-pass or redeemable-
+on-fail token that is dependent on an improvement proposal, irrespective
+ of where the improvement proposal was raised.
+ Figure 7 could depict trading around an ABC proposal, an XYZ proposal,
+ or a proposal to a different DAO.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/CalculatingImpact.drawio.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Calculating impact to a token's market capitalization
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In an efficient market
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Although the market for conditional tokens is unlikely to be a perfect one,
+ the less efficient it is the stronger the incentive for users to step in
+ and correct any mispricings.
+\end_layout
+
+\end_inset
+
+, investors will buy and sell conditional-on-pass and conditional-on-fail
+ tokens until their prices reflect how they expect that proposal to impact
+ the token's market capitalization.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "key-11,key-12,key-13"
+literal "false"
+
+\end_inset
+
+ For example, if a proposal to DAO ABC would burn $5M of the DAO's stablecoins
+ for no reason, we would expect the market capitalization of ABC based on
+ the price of its conditional-on-pass tokens to be $5M less than the market
+ capitalization of ABC based on the price of its conditional-on-fail tokens.
+\end_layout
+
+\begin_layout Standard
+We can also work in the reverse order, backing into the market's expectation
+ of a proposal's impact by looking at the prices of its conditional-on-pass
+ and conditional-on-fail tokens.
+ All that's required is getting the difference in prices between the two
+ conditional tokens and multiplying this by the token's total supply.
+\end_layout
+
+\begin_layout Section
+Making decisions
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/MetaDAOImplementationNonMulticast.drawio.png
+	scale 15
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+How decisions are made
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We call the DAOs which make up Meta-DAO 
+\emph on
+members, 
+\emph default
+or
+\emph on
+ member DAOs.
+ 
+\emph default
+To make decisions on improvement proposals, members perform the following
+ algorithm:
+\end_layout
+
+\begin_layout Enumerate
+After an improvement proposal is raised, wait 10 days, during which the
+ market can bet on its impacts by buying and selling this proposal's redeemable-
+on-pass and redeemable-on-fail tokens.
+ This doesn't just concern this member's tokens; users can convert any member's
+ tokens into cndTokens tied to this improvement proposal.
+\end_layout
+
+\begin_layout Enumerate
+For each member DAO that had cndTokens tied to this improvement proposal,
+ calculate the impact that the proposal would have on the member's market
+ capitalization.
+ 
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+To prevent manipulation of this with proposals that burn the holdings of
+ random token-holders, members don't have the ability to burn any member
+ tokens other than the tokens stored in the member itself.
+ 
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Enumerate
+Add together all of the impacts calculated from the prior step.
+ When the sum is positive, execute the proposal.
+\end_layout
+
+\begin_layout Standard
+There is no special weight applied to any of the impacts.
+ In other words, members put the interests of all members, including their
+ own, on equal footing.
+\end_layout
+
+\begin_layout Section
+Funding the commons
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename media/MetaDAOGovernanceImplementation.drawio.png
+	scale 15
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Commons DAO improvement proposals
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The last mechnism needed is some way for improvement proposals to atomically
+ multicast to multiple members at once, where either all the members take
+ an action or none of them do.
+ This is needed for funding of common goods proposals, where either the
+ action should go through, and all relevant members should chip in by sending
+ money to a collective pot, or it should fail, and no members should send
+ money to the collective pot.
+\end_layout
+
+\begin_layout Standard
+This is accomplished through a special-purpose DAO called the commons DAO.
+ The commons DAO has no token of its own, and exists only to serve the interests
+ of the members.
+ All members execute any machine instructions that the commons DAO gives
+ them.
+ The commons DAO uses the same decision-making algorithm as the members,
+ taking decisions when they appear to be in the benefit of the group.
+\end_layout
+
+\begin_layout Standard
+The commons DAO also stores the list of active members.
+ For a new member to join a Meta-DAO, an improvement proposal containing
+ a machine instruction to push a new member to the list needs to pass through
+ the commons.
+\end_layout
+
+\begin_layout Section
+Incentive analysis
+\end_layout
+
+\begin_layout Standard
+In this section, we explore types of decisions and their incentives.
+\end_layout
+
+\begin_layout Subsection
+Proposals without externalities
+\end_layout
+
+\begin_layout Standard
+Many member DAO decisions only affect that member.
+ Examples of proposals in this category include:
+\end_layout
+
+\begin_layout Itemize
+Paying out regular contributors at a previously agreed-upon rate
+\end_layout
+
+\begin_layout Itemize
+Tweaking pricing of a dApp
+\end_layout
+
+\begin_layout Itemize
+Allocating capital to do a re-design of a website
+\end_layout
+
+\begin_layout Standard
+In these cases, investors are incentivized to buy or sell conditional tokens
+ of that member but not tokens of other members.
+ If other members' tokens are converted into a conditional variant that
+ is dependent on this proposal passing or failing, the incentive is for
+ those tokens to trade near price parity.
+ 
+\end_layout
+
+\begin_layout Standard
+At price parity, a DAO calculates the impact of a proposal on a DAO as 0,
+ and it doesn't affect the decision.
+ As such, decisions without externalities are likely to be determined by
+ the impact that a proposal would have on the DAO where the proposal was
+ raised.
+\end_layout
+
+\begin_layout Subsection
+Proposals with externalities
+\end_layout
+
+\begin_layout Standard
+Other proposals affect multiple members, even if they only involve an action
+ by one.
+ For example, members may share a common brand, and one member may be considerin
+g a product that could generate incremental revenue at the cost of overall
+ brand image.
+ 
+\end_layout
+
+\begin_layout Standard
+Here, investors are incentivized to sell those negatively-affected members'
+ redemable-on-pass tokens and buy their redeemable-on-fail tokens.
+ This doesn't prevent the proposal from proceeding; the proposal will pass
+ if the losses to those other members are smaller than the gains by the
+ member where the proposal was raised.
+ This can also work in reverse: proposals can pass even if they have a negative
+ impact on the member where they're raised if the positive impact to other
+ members is greater than that negative impact.
+ In other words, decisions are not always win-win, but in an efficient market
+ they are always positive-sum.
+\end_layout
+
+\begin_layout Subsection
+Commons decisions
+\end_layout
+
+\begin_layout Standard
+Proposals raised to the commons DAO create similar incentives to proposals
+ raised to a member that have externalities.
+ These proposals pass or fail based on whether they have a positive-sum
+ impact on the broader group of members.
+ Since the commons DAO has no token, its independent interests, if any,
+ aren't factored into the decision-making process.
+\end_layout
+
+\begin_layout Section
+Conclusion
+\end_layout
+
+\begin_layout Standard
+We have introduced a mechanism for decision-making in Meta-DAOs.
+ Instead of human decision-makers, it relies on open and permissionless
+ markets.
+ Meta-DAO is not a process for humans to follow, but is instead a combination
+ of programs and state, intended to be stored on the Solana blockchain.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-1"
+
+\end_inset
+
+Robert Leshner, 
+\begin_inset Quotes eld
+\end_inset
+
+Compound Governance,
+\begin_inset Quotes erd
+\end_inset
+
+ https://medium.com/compound-finance/compound-governance-5531f524cf68, February
+ 2020.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-2"
+
+\end_inset
+
+Various contributors, 
+\begin_inset Quotes eld
+\end_inset
+
+Compound Protocol,
+\begin_inset Quotes erd
+\end_inset
+
+ https://github.com/compound-finance/compound-protocol/tree/86c0116833596dcae7bec
+15eac2ad5a14da1806d, March 2020.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-10"
+
+\end_inset
+
+Mancur Olson Jr., 
+\begin_inset Quotes eld
+\end_inset
+
+The logic of collective action: public goods and the theory of groups,
+\begin_inset Quotes erd
+\end_inset
+
+ 1965.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-7"
+
+\end_inset
+
+@tracheopteryx and @lex_node, 
+\begin_inset Quotes eld
+\end_inset
+
+YIP-61: Governance 2.0,
+\begin_inset Quotes erd
+\end_inset
+
+ https://gov.yearn.finance/t/yip-61-governance-2-0/10460, April 2021.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-8"
+
+\end_inset
+
+pet3rpan, 
+\begin_inset Quotes eld
+\end_inset
+
+KPI Sub-DAO Structure,
+\begin_inset Quotes erd
+\end_inset
+
+ https://pet3rpan.mirror.xyz/5nsl1Xnr-BwmNAPoNeMlghPiTFMhxNg4zE7suaR0sXc,
+ January 2022.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-3"
+
+\end_inset
+
+Rune Christensen, 
+\begin_inset Quotes eld
+\end_inset
+
+The Endgame Plan parts 1&2,
+\begin_inset Quotes erd
+\end_inset
+
+ https://forum.makerdao.com/t/the-endgame-plan-parts-1-2/15456, May 2022.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-11"
+
+\end_inset
+
+Robin Hanson, 
+\begin_inset Quotes eld
+\end_inset
+
+Shall we vote on values, but bet on beliefs?
+\begin_inset Quotes erd
+\end_inset
+
+ In 
+\emph on
+Journal of Political Philosophy, 
+\emph default
+2013.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-12"
+
+\end_inset
+
+Paul A.
+ Samuelson and William D.
+ Hordhaus, 
+\begin_inset Quotes eld
+\end_inset
+
+Economics,
+\begin_inset Quotes erd
+\end_inset
+
+ 1948.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-13"
+
+\end_inset
+
+Aswath Damodaran, 
+\begin_inset Quotes eld
+\end_inset
+
+Investment valuation: tools and techniques for determining the value of
+ any asset,
+\begin_inset Quotes erd
+\end_inset
+
+ 1995.
+ 
+\end_layout
+
+\end_body
+\end_document
